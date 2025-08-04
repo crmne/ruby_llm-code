@@ -43,7 +43,6 @@ repomix-output.*
 # Gem build artifacts
 *.gem
 pkg/
-Gemfile.lock
 
 # Test coverage
 coverage/
