@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-module RubyLLM::Code
-  module Tools
-    class MultiEdit < BaseTool
-      def name
-        "MultiEdit"
-      end
+module RubyLLM
+  module Code
+    module Tools
+      # rubocop:disable Style/Documentation
+      class MultiEdit < BaseTool
+        def name
+          'MultiEdit'
+        end
 
-      description <<~DESC
+        description <<~DESC
           This is a tool for making multiple edits to a single file in one operation. It is built on top of the Edit tool and allows you to perform multiple find-and-replace operations efficiently. Prefer this tool over the Edit tool when you need to make multiple edits to the same file.
 
           Before using this tool:
@@ -24,7 +26,7 @@ module RubyLLM::Code
 
           IMPORTANT:
           - All edits are applied in sequence, in the order they are provided
-          - Each edit operates on the result of the previous edit
+          - Each edit operates on the result of the previous edit # rubocop:disable Layout/LineLength
           - All edits must be valid for the operation to succeed - if any edit fails, none will be applied
           - This tool is ideal when you need to make several changes to different parts of the same file
           - For Jupyter notebooks (.ipynb files), use the NotebookEdit instead
@@ -51,64 +53,58 @@ module RubyLLM::Code
           - First edit: empty old_string and the new file's contents as new_string
           - Subsequent edits: normal edit operations on the created content
         DESC
-      
-      param :file_path, desc: "The absolute path to the file to modify"
-      param :edits, type: "array", desc: "Array of edit operations to perform sequentially on the file"
-      
-      def execute(file_path:, edits:)
-        abs_path = validate_path(file_path)
-        
-        # Check if file exists
-        if !File.exist?(abs_path) && !edits.first["old_string"].empty?
-          raise "File does not exist: #{abs_path}"
-        end
-        
-        # Read current content or start with empty for new files
-        content = File.exist?(abs_path) ? File.read(abs_path) : ""
-        original_content = content.dup
-        
-        # Apply edits sequentially
-        edits.each_with_index do |edit, index|
-          old_string = edit["old_string"]
-          new_string = edit["new_string"]
-          replace_all = edit["replace_all"] || false
-          
-          # Validate edit
-          if old_string == new_string
-            raise "Edit #{index + 1}: old_string and new_string cannot be the same"
-          end
-          
-          # For new file creation, allow empty old_string
-          if old_string.empty? && index == 0 && !File.exist?(abs_path)
-            content = new_string
-            next
-          end
-          
-          # Check if old_string exists in content
-          if !content.include?(old_string)
-            raise "Edit #{index + 1}: old_string not found in file"
-          end
-          
-          # Apply the edit
-          if replace_all
-            content = content.gsub(old_string, new_string)
-          else
-            # Replace only first occurrence
-            index = content.index(old_string)
-            if index
-              content = content[0...index] + new_string + content[(index + old_string.length)..-1]
+
+        param :file_path, desc: 'The absolute path to the file to modify'
+        param :edits, type: 'array', desc: 'Array of edit operations to perform sequentially on the file'
+
+        def execute(file_path:, edits:) # rubocop:disable Metrics/PerceivedComplexity
+          abs_path = validate_path(file_path)
+
+          # Check if file exists
+          raise "File does not exist: #{abs_path}" if !File.exist?(abs_path) && !edits.first['old_string'].empty?
+
+          # Read current content or start with empty for new files
+          content = File.exist?(abs_path) ? File.read(abs_path) : ''
+          content.dup
+
+          # Apply edits sequentially
+          edits.each_with_index do |edit, index|
+            old_string = edit['old_string']
+            new_string = edit['new_string']
+            replace_all = edit['replace_all'] || false
+
+            # Validate edit
+            raise "Edit #{index + 1}: old_string and new_string cannot be the same" if old_string == new_string
+
+            # For new file creation, allow empty old_string
+            if old_string.empty? && index.zero? && !File.exist?(abs_path)
+              content = new_string
+              next
+            end
+
+            # Check if old_string exists in content
+            raise "Edit #{index + 1}: old_string not found in file" unless content.include?(old_string)
+
+            # Apply the edit
+            if replace_all
+              content = content.gsub(old_string, new_string)
+            else
+              # Replace only first occurrence
+              index = content.index(old_string)
+              content = content[0...index] + new_string + content[(index + old_string.length)..] if index
             end
           end
+
+          # Write the final content
+          FileUtils.mkdir_p(File.dirname(abs_path))
+          File.write(abs_path, content)
+
+          # Return summary
+          edit_count = edits.length
+          "Successfully applied #{edit_count} edit#{'s' if edit_count > 1} to #{file_path}"
         end
-        
-        # Write the final content
-        FileUtils.mkdir_p(File.dirname(abs_path))
-        File.write(abs_path, content)
-        
-        # Return summary
-        edit_count = edits.length
-        "Successfully applied #{edit_count} edit#{edit_count > 1 ? 's' : ''} to #{file_path}"
       end
+      # rubocop:enable Style/Documentation
     end
   end
 end

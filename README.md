@@ -48,7 +48,7 @@ This isn't just another CLI tool. It's Claude Code, built the Ruby way:
 
 We kept what matters:
 - File operations (read, write, edit)
-- Shell execution 
+- Shell execution
 - Web search and fetching
 - Memory that persists
 - MCP server support

@@ -1,38 +1,39 @@
 # frozen_string_literal: true
 
-require_relative "lib/ruby_llm/code/version"
+require_relative 'lib/ruby_llm/code/version'
 
 Gem::Specification.new do |spec|
-  spec.name = "ruby_llm-code"
+  spec.name = 'ruby_llm-code'
   spec.version = RubyLLM::Code::VERSION
-  spec.authors = ["Carmine Paolino"]
-  spec.email = ["carmine@paolino.me"]
-  
-  spec.summary = "A powerful coding assistant powered by RubyLLM"
-  spec.description = "RubyLLM Code provides an AI-powered coding assistant with file operations, shell execution, web search, and MCP support, optimized for software development workflows."
-  spec.homepage = "https://github.com/crmne/ruby_llm-code"
-  spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.0"
-  
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = spec.homepage
-  
+  spec.authors = ['Carmine Paolino']
+  spec.email = ['carmine@paolino.me']
+
+  spec.summary = 'A powerful coding assistant powered by RubyLLM'
+  spec.description = 'RubyLLM Code provides an AI-powered coding assistant with file operations, shell execution, web search, and MCP support, optimized for software development workflows.' # rubocop:disable Layout/LineLength
+  spec.homepage = 'https://github.com/crmne/ruby_llm-code'
+  spec.license = 'MIT'
+  spec.required_ruby_version = '>= 3.2.0'
+
+  spec.metadata['homepage_uri'] = spec.homepage
+  spec.metadata['source_code_uri'] = spec.homepage
+  spec.metadata['rubygems_mfa_required'] = 'true'
+
   spec.files = Dir[
-    "lib/**/*",
-    "bin/*",
-    "README.md",
-    "LICENSE",
-    "Gemfile"
+    'lib/**/*',
+    'bin/*',
+    'README.md',
+    'LICENSE',
+    'Gemfile'
   ]
-  
-  spec.bindir = "bin"
-  spec.executables = ["rubyllm"]
-  spec.require_paths = ["lib"]
-  
-  spec.add_dependency "ruby_llm", "~> 1.5.1"
-  spec.add_dependency "ruby_llm-mcp", "~> 0.6.1"
-  spec.add_dependency "zeitwerk", "~> 2.6"
-  
-  spec.add_development_dependency "rspec", "~> 3.12"
-  spec.add_development_dependency "standard", "~> 1.31"
+
+  spec.bindir = 'bin'
+  spec.executables = ['rubyllm']
+  spec.require_paths = ['lib']
+
+  spec.add_dependency 'ruby_llm', '~> 1.5.1'
+  spec.add_dependency 'ruby_llm-mcp', '~> 0.6.1'
+  spec.add_dependency 'zeitwerk', '~> 2.6'
+
+  spec.add_development_dependency 'rspec', '~> 3.12' # rubocop:disable Gemspec/DevelopmentDependencies
+  spec.add_development_dependency 'standard', '~> 1.31' # rubocop:disable Gemspec/DevelopmentDependencies
 end

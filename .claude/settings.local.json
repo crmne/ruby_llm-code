@@ -33,7 +33,9 @@
       "Bash(bundle info:*)",
       "Bash(find:*)",
       "Bash(mkdir:*)",
-      "Bash(true)"
+      "Bash(true)",
+      "Bash(overcommit:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

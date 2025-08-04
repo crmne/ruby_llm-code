@@ -1,17 +1,19 @@
 # frozen_string_literal: true
 
-module RubyLLM::Code
-  module Tools
-    class Task < BaseTool
-      def name
-        "Task"
-      end
+module RubyLLM
+  module Code
+    module Tools
+      # rubocop:disable Style/Documentation
+      class Task < BaseTool
+        def name
+          'Task'
+        end
 
-      description <<~DESC
+        description <<~DESC
           Launch a new agent to handle complex, multi-step tasks autonomously.
 
           Available agent types and the tools they have access to:
-          - general-purpose: General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. (Tools: *)
+          - general-purpose: General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. (Tools: *) # rubocop:disable Layout/LineLength
 
           When using the Task tool, you must specify a subagent_type parameter to select which agent type to use.
 
@@ -32,67 +34,69 @@ module RubyLLM::Code
           5. Clearly tell the agent whether you expect it to write code or just to do research (search, file reads, web fetches, etc.), since it is not aware of the user's intent
           6. If the agent description mentions that it should be used proactively, then you should try your best to use it without the user having to ask for it first. Use your judgement.
         DESC
-      
-      param :description, desc: "A short (3-5 word) description of the task"
-      param :prompt, desc: "The task for the agent to perform"
-      param :subagent_type, desc: "The type of specialized agent to use for this task"
-      
-      def execute(description:, prompt:, subagent_type:)
-        # Create a new sub-agent context
-        sub_config = config.dup
-        
-        # Build sub-agent system prompt
-        sub_system_prompt = <<~PROMPT
-          You are a sub-agent working on a specific task. Your role is to complete the task autonomously and return a comprehensive report.
-          
-          Task Type: #{subagent_type}
-          Task Description: #{description}
-          
-          Remember:
-          - You cannot interact with the user or the main agent after this message
-          - Provide a complete, self-contained report of your findings
-          - Be thorough but concise in your final response
-        PROMPT
-        
-        # Create sub-chat with the task prompt
-        sub_chat = RubyLLM.chat(
-          model: config.model,
-          messages: [
-            { role: "system", content: sub_system_prompt },
-            { role: "user", content: prompt }
-          ],
-          tools: available_tools
-        )
-        
-        # Execute the sub-agent task
-        result = ""
-        sub_chat.stream do |chunk|
-          result += chunk if chunk.is_a?(String)
+
+        param :description, desc: 'A short (3-5 word) description of the task'
+        param :prompt, desc: 'The task for the agent to perform'
+        param :subagent_type, desc: 'The type of specialized agent to use for this task'
+
+        def execute(description:, prompt:, subagent_type:)
+          # Create a new sub-agent context
+          config.dup
+
+          # Build sub-agent system prompt
+          sub_system_prompt = <<~PROMPT
+            You are a sub-agent working on a specific task. Your role is to complete the task autonomously and return a comprehensive report.
+
+            Task Type: #{subagent_type}
+            Task Description: #{description}
+
+            Remember:
+            - You cannot interact with the user or the main agent after this message
+            - Provide a complete, self-contained report of your findings
+            - Be thorough but concise in your final response
+          PROMPT
+
+          # Create sub-chat with the task prompt
+          sub_chat = RubyLLM.chat(
+            model: config.model,
+            messages: [
+              { role: 'system', content: sub_system_prompt },
+              { role: 'user', content: prompt }
+            ],
+            tools: available_tools
+          )
+
+          # Execute the sub-agent task
+          result = ''
+          sub_chat.stream do |chunk|
+            result += chunk if chunk.is_a?(String)
+          end
+
+          # Return the sub-agent's final report
+          <<~RESULT
+            Sub-agent (#{subagent_type}) completed task: #{description}
+
+            Report:
+            #{result}
+          RESULT
+        rescue StandardError => e
+          "Sub-agent failed with error: #{e.message}"
         end
-        
-        # Return the sub-agent's final report
-        <<~RESULT
-          Sub-agent (#{subagent_type}) completed task: #{description}
-          
-          Report:
-          #{result}
-        RESULT
-      rescue => e
-        "Sub-agent failed with error: #{e.message}"
+
+        private
+
+        def available_tools
+          # Return all available tools for sub-agent
+          Dir[File.join(__dir__, '*.rb')].map do |file|
+            tool_name = File.basename(file, '.rb')
+            next if %w[base_tool task].include?(tool_name)
+
+            tool_class = RubyLLM::Code::Tools.const_get(tool_name.split('_').map(&:capitalize).join)
+            tool_class.new(config)
+          end.compact
+        end
       end
-      
-      private
-      
-      def available_tools
-        # Return all available tools for sub-agent
-        Dir[File.join(__dir__, "*.rb")].map do |file|
-          tool_name = File.basename(file, ".rb")
-          next if tool_name == "base_tool" || tool_name == "task"
-          
-          tool_class = RubyLLM::Code::Tools.const_get(tool_name.split("_").map(&:capitalize).join)
-          tool_class.new(config)
-        end.compact
-      end
+      # rubocop:enable Style/Documentation
     end
   end
 end
