@@ -30,5 +30,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
   
   # Minimal dependencies
-  spec.add_dependency "ruby_llm", "~> 1.0"
+  spec.add_dependency "ruby_llm", "~> 1.5.1"
 end

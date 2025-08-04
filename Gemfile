@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
-gem "ruby_llm", path: "../ruby_llm"
-gem "ruby_llm-mcp"
+gem "ruby_llm", "~> 1.5.1"
+gem "ruby_llm-mcp", "~> 0.6.1"
 gem "zeitwerk"
 gem "readline"
 

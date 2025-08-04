@@ -29,8 +29,8 @@ Gem::Specification.new do |spec|
   spec.executables = ["rubyllm"]
   spec.require_paths = ["lib"]
   
-  spec.add_dependency "ruby_llm", "~> 1.0"
-  spec.add_dependency "ruby_llm-mcp", "~> 0.1"
+  spec.add_dependency "ruby_llm", "~> 1.5.1"
+  spec.add_dependency "ruby_llm-mcp", "~> 0.6.1"
   spec.add_dependency "zeitwerk", "~> 2.6"
   
   spec.add_development_dependency "rspec", "~> 3.12"
