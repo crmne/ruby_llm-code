@@ -49,7 +49,7 @@ jobs:
       run: bundle install
 
     - name: Check code format
-      run: bundle exec standardrb
+      run: bundle exec rubocop
 
     - name: Run tests
       run: bundle exec rspec
