@@ -7,6 +7,7 @@ on:
       - 'lib/**'
       - 'spec/**'
       - 'Gemfile'
+      - 'Gemfile.lock'
       - 'Rakefile'
       - 'ruby_llm-code.gemspec'
       - '.github/workflows/cicd.yml'
@@ -16,9 +17,11 @@ on:
       - 'lib/**'
       - 'spec/**'
       - 'Gemfile'
+      - 'Gemfile.lock'
       - 'Rakefile'
       - 'ruby_llm-code.gemspec'
       - '.github/workflows/cicd.yml'
+  workflow_dispatch:  # Allow manual triggering
   workflow_call:
 
 # Define default permissions for this workflow
