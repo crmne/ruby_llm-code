@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(chmod:*)",
+      "Bash(bundle install:*)",
+      "Bash(ruby:*)",
+      "Bash(rm:*)",
+      "Bash(ls:*)",
+      "Bash(./bin/rubyllm:*)",
+      "Bash(bundle exec ruby:*)",
+      "Bash(bundle check:*)",
+      "Bash(bundle exec:*)",
+      "Bash(dotenv bundle exec:*)",
+      "Bash(grep:*)",
+      "Bash(timeout 5 dotenv bundle exec ./bin/rubyllm)",
+      "Bash(DEBUG=1 timeout 10 dotenv bundle exec ./bin/rubyllm)",
+      "Bash(./test_cli_interaction.sh:*)",
+      "Bash(./test_with_tools.sh:*)",
+      "Bash(for file in lib/rubyllm_cli/tools/{web_fetch,memory_tool,todo_write,task,exit_plan_mode,multi_edit}.rb)",
+      "Bash(do)",
+      "Bash(echo \"=== $file ===\")",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(mv:*)",
+      "Bash(timeout:*)",
+      "Bash(./test_new_cli.sh:*)",
+      "Bash(./test_cli.sh:*)",
+      "Bash(DEBUG=1 dotenv bundle exec ./bin/rubyllm)",
+      "Bash(env:*)",
+      "Bash(FORCE_COLOR=1 bundle exec ruby test_colors.rb)",
+      "Bash(FORCE_COLOR=1 ./test_new_cli.sh)",
+      "Bash(cat:*)",
+      "Bash(bundle info:*)"
+    ],
+    "deny": []
+  }
+}

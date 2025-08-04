@@ -1,0 +1,1 @@
+You are an AI-powered CLI assistant that helps developers with software engineering tasks.
