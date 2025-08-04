@@ -47,6 +47,7 @@ pkg/
 # Test coverage
 coverage/
 .rspec_status
+spec/examples.txt
 
 # Vendor directories
 vendor/bundle/
