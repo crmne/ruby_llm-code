@@ -6,27 +6,61 @@ require 'spec_helper'
 RSpec.describe RubyLLM::Code::Config do
   let(:config) { described_class.new }
 
+  before do
+    # Temporarily rename config file if it exists to avoid interference
+    @config_backup = nil
+    config_path = File.expand_path('~/.rubyllm/config.yml')
+    if File.exist?(config_path)
+      @config_backup = "#{config_path}.backup"
+      FileUtils.mv(config_path, @config_backup)
+    end
+  end
+
+  after do
+    # Restore config file if we backed it up
+    if @config_backup && File.exist?(@config_backup)
+      FileUtils.mv(@config_backup, File.expand_path('~/.rubyllm/config.yml'))
+    end
+  end
+
   describe '#initialize' do
     it 'sets default values' do
+      # Clear any environment variables that might affect the test
+      original_model = ENV.delete('RUBYLLM_MODEL')
+
+      config = described_class.new
       expect(config.model).to eq('claude-3-5-haiku-20241022')
       expect(config.temperature).to eq(0.7)
       expect(config.tools_enabled).to be true
       expect(config.memory_enabled).to be true
       expect(config.auto_approval).to eq([])
+
+      # Restore original value if it existed
+      ENV['RUBYLLM_MODEL'] = original_model if original_model
     end
 
     it 'respects RUBYLLM_MODEL environment variable' do
+      # Store original value
+      original_model = ENV.fetch('RUBYLLM_MODEL', nil)
+
       ENV['RUBYLLM_MODEL'] = 'gpt-4'
       new_config = described_class.new
       expect(new_config.model).to eq('gpt-4')
-      ENV.delete('RUBYLLM_MODEL')
+
+      # Restore original value
+      if original_model
+        ENV['RUBYLLM_MODEL'] = original_model
+      else
+        ENV.delete('RUBYLLM_MODEL')
+      end
     end
   end
 
   describe '#workspace' do
     it 'returns a workspace instance' do
       expect(config.workspace).to be_a(RubyLLM::Code::Workspace)
-      expect(config.workspace.root).to eq(Dir.pwd)
+      # The workspace root should be the configured workspace_dir
+      expect(config.workspace.root).to eq(config.workspace_dir)
     end
   end
 

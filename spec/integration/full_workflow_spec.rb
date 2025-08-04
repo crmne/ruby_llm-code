@@ -19,21 +19,21 @@ RSpec.describe 'Full workflow integration' do # rubocop:disable RSpec/DescribeCl
 
     # Search for class definitions
     grep_result = grep_tool.execute(pattern: 'class \\w+')
-    expect(grep_result[:total_matches]).to eq(2)
+    expect(grep_result).to include('src/app.rb')
+    expect(grep_result).to include('test/app_test.rb')
 
     # Read the main file
-    read_result = read_tool.execute(path: 'src/app.rb')
-    expect(read_result[:content]).to include('class App')
+    read_result = read_tool.execute(file_path: 'src/app.rb')
+    expect(read_result).to include('class App')
 
     # Modify the file
-    new_content = read_result[:content].gsub("'world'", "'Hello, RubyLLM!'")
-    write_result = write_tool.execute(path: 'src/app.rb', content: new_content)
-    expect(write_result[:bytes_written]).to be > 0
+    new_content = read_result.gsub("'world'", "'Hello, RubyLLM!'")
+    write_result = write_tool.execute(file_path: 'src/app.rb', content: new_content)
+    expect(write_result).to include('successfully')
 
     # Verify the change
     verify_result = shell_tool.execute(command: "grep 'Hello, RubyLLM!' src/app.rb")
-    expect(verify_result[:exit_code]).to eq(0)
-    expect(verify_result[:stdout]).to include('Hello, RubyLLM!')
+    expect(verify_result).to include('Hello, RubyLLM!')
   end
 
   it 'handles memory persistence across sessions' do
@@ -55,12 +55,14 @@ RSpec.describe 'Full workflow integration' do # rubocop:disable RSpec/DescribeCl
     write_tool = RubyLLM::Code::Tools::WriteFile.new(config)
 
     # Should fail for paths outside workspace
-    expect { read_tool.execute(path: '/etc/passwd') }.to raise_error(/workspace/)
-    expect { write_tool.execute(path: '/tmp/test.txt', content: 'test') }.to raise_error(/workspace/)
+    expect { read_tool.execute(file_path: '/etc/passwd') }.to raise_error(/workspace/)
+    result = write_tool.execute(file_path: '/tmp/test.txt', content: 'test')
+    expect(result).to include('Error:')
+    expect(result).to include('Path outside workspace')
 
     # Should work for paths within workspace
-    result = write_tool.execute(path: 'allowed.txt', content: 'safe content')
-    expect(result[:error]).to be_nil
+    result = write_tool.execute(file_path: 'allowed.txt', content: 'safe content')
+    expect(result).to include('successfully')
   end
 
   it 'handles complex grep patterns with context' do
@@ -88,14 +90,16 @@ RSpec.describe 'Full workflow integration' do # rubocop:disable RSpec/DescribeCl
     # Search for method definitions with context
     result = grep_tool.execute(
       pattern: 'def \\w+\\(.*\\)',
-      file_pattern: '*.rb',
-      context_lines: 1
+      glob: '*.rb',
+      output_mode: 'content',
+      '-C': 1
     )
 
-    expect(result[:total_matches]).to eq(3)
+    expect(result).to include('def add')
+    expect(result).to include('def subtract')
+    expect(result).to include('def multiply')
 
     # Check context includes method body
-    first_match = result[:matches].first[:matches].first
-    expect(first_match[:context]).to include('a + b')
+    expect(result).to include('a + b')
   end
 end

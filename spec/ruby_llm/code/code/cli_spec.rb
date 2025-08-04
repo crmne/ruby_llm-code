@@ -74,6 +74,7 @@ RSpec.describe RubyLLM::Code::CLI do
     end
 
     it 'handles errors gracefully' do
+      allow($stdin).to receive(:tty?).and_return(true)
       allow(RubyLLM::Code::InteractiveCLI).to receive(:new).and_raise('Test error')
 
       expect { cli.run([]) }.to output(/Error: Test error/).to_stderr.and raise_error(SystemExit)
