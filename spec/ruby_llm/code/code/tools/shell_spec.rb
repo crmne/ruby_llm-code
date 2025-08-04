@@ -56,7 +56,7 @@ RSpec.describe RubyLLM::Code::Tools::Shell do
     it 'validates directory exists' do
       result = tool.execute(command: 'cd nonexistent && pwd')
 
-      expect(result).to include('No such file or directory')
+      expect(result).to match(/No such file or directory|can't cd to nonexistent/)
     end
   end
 end
