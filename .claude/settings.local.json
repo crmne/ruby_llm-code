@@ -30,7 +30,8 @@
       "Bash(FORCE_COLOR=1 bundle exec ruby test_colors.rb)",
       "Bash(FORCE_COLOR=1 ./test_new_cli.sh)",
       "Bash(cat:*)",
-      "Bash(bundle info:*)"
+      "Bash(bundle info:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
