@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require_relative "lib/ruby_llm/code/version"
+
 Gem::Specification.new do |spec|
   spec.name = "ruby_llm-code"
-  spec.version = "1.0.0"
+  spec.version = RubyLLM::Code::VERSION
   spec.authors = ["Carmine Paolino"]
   spec.email = ["carmine@paolino.me"]
   

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
-module RubyLLM::Code
-  VERSION = "0.1.0"
+module RubyLLM
+  module Code
+    VERSION = "1.0.0"
+  end
 end
