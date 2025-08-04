@@ -31,7 +31,9 @@
       "Bash(FORCE_COLOR=1 ./test_new_cli.sh)",
       "Bash(cat:*)",
       "Bash(bundle info:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(mkdir:*)",
+      "Bash(true)"
     ],
     "deny": []
   }

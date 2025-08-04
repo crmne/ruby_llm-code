@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "bundler/setup"
-require "rubyllm_cli"
+require "ruby_llm-code"
 require "tempfile"
 require "fileutils"
 
@@ -57,7 +57,7 @@ module TestHelpers
   end
   
   def test_config
-    config = RubyLLMCLI::Config.new
+    config = RubyLLM::Code::Config.new
     config.workspace_dir = @temp_dir
     config
   end

@@ -9,7 +9,7 @@ This is Claude Code, reimagined in Ruby. Same powerful AI assistance, but with t
 ## Installation
 
 ```bash
-gem install rubyllm_cli
+gem install ruby_llm-code
 ```
 
 Or clone and run:

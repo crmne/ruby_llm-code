@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RubyLLM CLI is a Ruby implementation of Claude Code - an AI-powered command-line interface for software development assistance. It emphasizes minimal dependencies, clean architecture, and excellent developer experience.
+RubyLLM Code is a Ruby implementation of Claude Code - an AI-powered command-line interface for software development assistance. It emphasizes minimal dependencies, clean architecture, and excellent developer experience.
 
 ## Essential Commands
 

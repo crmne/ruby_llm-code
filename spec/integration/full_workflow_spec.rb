@@ -11,10 +11,10 @@ RSpec.describe "Full workflow integration" do
     create_test_file("test/app_test.rb", "require 'app'\n\nclass AppTest\n  def test_hello\n    assert_equal 'world', App.new.hello\n  end\nend")
     
     # Initialize tools
-    read_tool = RubyLLMCLI::Tools::ReadFile.new(config)
-    write_tool = RubyLLMCLI::Tools::WriteFile.new(config)
-    grep_tool = RubyLLMCLI::Tools::Grep.new(config)
-    shell_tool = RubyLLMCLI::Tools::Shell.new(config)
+    read_tool = RubyLLM::Code::Tools::ReadFile.new(config)
+    write_tool = RubyLLM::Code::Tools::WriteFile.new(config)
+    grep_tool = RubyLLM::Code::Tools::Grep.new(config)
+    shell_tool = RubyLLM::Code::Tools::Shell.new(config)
     
     # Search for class definitions
     grep_result = grep_tool.execute(pattern: "class \\w+")
@@ -36,12 +36,12 @@ RSpec.describe "Full workflow integration" do
   end
   
   it "handles memory persistence across sessions" do
-    memory1 = RubyLLMCLI::Memory.new
+    memory1 = RubyLLM::Code::Memory.new
     memory1.add("project_name", "TestProject")
     memory1.add("preferred_style", "functional")
     
     # Simulate new session
-    memory2 = RubyLLMCLI::Memory.new
+    memory2 = RubyLLM::Code::Memory.new
     expect(memory2.get("project_name")).to eq("TestProject")
     expect(memory2.get("preferred_style")).to eq("functional")
     
@@ -50,8 +50,8 @@ RSpec.describe "Full workflow integration" do
   end
   
   it "respects workspace boundaries" do
-    read_tool = RubyLLMCLI::Tools::ReadFile.new(config)
-    write_tool = RubyLLMCLI::Tools::WriteFile.new(config)
+    read_tool = RubyLLM::Code::Tools::ReadFile.new(config)
+    write_tool = RubyLLM::Code::Tools::WriteFile.new(config)
     
     # Should fail for paths outside workspace
     expect { read_tool.execute(path: "/etc/passwd") }.to raise_error(/workspace/)
@@ -82,7 +82,7 @@ RSpec.describe "Full workflow integration" do
     
     create_test_file("calculator.rb", ruby_content)
     
-    grep_tool = RubyLLMCLI::Tools::Grep.new(config)
+    grep_tool = RubyLLM::Code::Tools::Grep.new(config)
     
     # Search for method definitions with context
     result = grep_tool.execute(
