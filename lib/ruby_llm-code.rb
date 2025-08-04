@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# RubyLLM Code v0.1.0 - Placeholder release
+# Full implementation coming soon!
+
 require "ruby_llm"
 require "fileutils"
 require "yaml"
