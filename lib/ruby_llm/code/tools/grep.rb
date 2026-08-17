@@ -1,109 +1,76 @@
 # frozen_string_literal: true
 
-require 'English'
-require 'shellwords'
+require 'open3'
 
 module RubyLLM
   module Code
     module Tools
-      # rubocop:disable Style/Documentation
-      class Grep < BaseTool
-        def name
-          'Grep'
+      # Searches file contents. Uses ripgrep when it is installed and falls back
+      # to Ruby so the tool works on a bare machine.
+      class Grep < Base
+        LIMIT = 100
+        MAX_OUTPUT = 20_000
+
+        description <<~TEXT
+          Search file contents with a regular expression and return matching lines
+          with their file and line number. Narrow the search with path or glob.
+        TEXT
+
+        parameter :pattern, description: 'Regular expression to search for'
+        parameter :path, required: false, description: 'File or directory to search under. Defaults to the workspace'
+        parameter :glob, required: false, description: 'Only search files matching this glob, for example "*.rb"'
+        parameter :ignore_case, type: :boolean, required: false, description: 'Match without regard to case'
+
+        def self.label(arguments) = [arguments[:pattern], arguments[:path]].compact.join(' in ')
+
+        def execute(pattern:, path: '.', glob: nil, ignore_case: false)
+          target = workspace.resolve(path)
+          return { error: "#{path} does not exist" } unless target.exist?
+
+          matches = ripgrep(pattern, target, glob, ignore_case) || search(pattern, target, glob, ignore_case)
+          return "No matches for #{pattern}" if matches.empty?
+
+          shown = matches.first(LIMIT).join("\n")
+          shown += "\n... #{matches.size - LIMIT} more matches" if matches.size > LIMIT
+          clamp(shown, MAX_OUTPUT)
+        rescue RegexpError => e
+          { error: "invalid pattern: #{e.message}" }
         end
 
-        def description
-          <<~DESC
-            A powerful search tool built on ripgrep
+        private
 
-            Usage:
-            - ALWAYS use Grep for search tasks. NEVER invoke `grep` or `rg` as a Bash command. The Grep tool has been optimized for correct permissions and access.
-            - Supports full regex syntax (e.g., "log.*Error", "function\\s+\\w+")
-            - Filter files with glob parameter (e.g., "*.js", "**/*.tsx") or type parameter (e.g., "js", "py", "rust")
-            - Output modes: "content" shows matching lines, "files_with_matches" shows only file paths (default), "count" shows match counts
-            - Use Task tool for open-ended searches requiring multiple rounds
-            - Pattern syntax: Uses ripgrep (not grep) - literal braces need escaping (use `interface\\{\\}` to find `interface{}` in Go code)
-            - Multiline matching: By default patterns match within single lines only. For cross-line patterns like `struct \\{[\\s\\S]*?field`, use `multiline: true`
-          DESC
+        def ripgrep(pattern, target, glob, ignore_case)
+          command = ['rg', '--line-number', '--no-heading', '--color', 'never']
+          command << '--ignore-case' if ignore_case
+          command += ['--glob', glob] if glob
+          Workspace::NOISE.each { |name| command += ['--glob', "!#{name}/"] }
+          command += ['--regexp', pattern.to_s, target.to_s]
+
+          stdout, status = Open3.capture2(*command, chdir: workspace.root.to_s)
+          return [] if status.exitstatus == 1 # ripgrep found nothing
+
+          status.success? ? stdout.lines(chomp: true).map { |line| line.delete_prefix("#{workspace.root}/") } : nil
+        rescue Errno::ENOENT
+          nil # no ripgrep here, fall back to Ruby
         end
 
-        param :pattern, desc: 'The regular expression pattern to search for in file contents'
-        param :path, desc: 'File or directory to search in (rg PATH). Defaults to current working directory.',
-                     required: false
-        param :glob, desc: 'Glob pattern to filter files (e.g. "*.js", "*.{ts,tsx}") - maps to rg --glob',
-                     required: false
-        param :type,
-              desc: 'File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.', required: false # rubocop:disable Layout/LineLength
-        param :output_mode,
-              desc: 'Output mode: "content" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), "files_with_matches" shows file paths (supports head_limit), "count" shows match counts (supports head_limit). Defaults to "files_with_matches".', required: false # rubocop:disable Layout/LineLength
-        param :'-A', type: 'integer',
-                     desc: 'Number of lines to show after each match (rg -A). Requires output_mode: "content", ignored otherwise.', required: false # rubocop:disable Layout/LineLength
-        param :'-B', type: 'integer',
-                     desc: 'Number of lines to show before each match (rg -B). Requires output_mode: "content", ignored otherwise.', required: false # rubocop:disable Layout/LineLength
-        param :'-C', type: 'integer',
-                     desc: 'Number of lines to show before and after each match (rg -C). Requires output_mode: "content", ignored otherwise.', required: false # rubocop:disable Layout/LineLength
-        param :'-i', desc: 'Case insensitive search (rg -i)', required: false
-        param :'-n', desc: 'Show line numbers in output (rg -n). Requires output_mode: "content", ignored otherwise.',
-                     required: false
-        param :multiline,
-              desc: 'Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.', required: false # rubocop:disable Layout/LineLength
-        param :head_limit, type: 'integer',
-                           desc: 'Limit output to first N lines/entries, equivalent to "| head -N". Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). When unspecified, shows all results from ripgrep.', required: false # rubocop:disable Layout/LineLength
+        def search(pattern, target, glob, ignore_case)
+          regexp = Regexp.new(pattern.to_s, ignore_case ? Regexp::IGNORECASE : nil)
+          candidates(target, glob).flat_map { |file| matching_lines(file, regexp) }
+        end
 
-        def execute(pattern:, path: nil, **options) # rubocop:disable Metrics/PerceivedComplexity
-          # Build ripgrep command
-          cmd = ['rg']
+        def candidates(target, glob)
+          target.file? ? [target] : workspace.files(glob || '**/*', base: target)
+        end
 
-          # Add pattern (escape it for shell)
-          cmd << pattern.shellescape
-
-          # Add path if specified
-          abs_path = path ? validate_path(path) : workspace.root
-          cmd << abs_path.shellescape
-
-          # Handle output mode
-          output_mode = options[:output_mode] || 'files_with_matches'
-
-          case output_mode
-          when 'files_with_matches'
-            cmd << '--files-with-matches'
-          when 'count'
-            cmd << '--count'
-          when 'content'
-            # Add context flags if specified
-            cmd << '-A' << options[:'-A'].to_s if options[:'-A']
-            cmd << '-B' << options[:'-B'].to_s if options[:'-B']
-            cmd << '-C' << options[:'-C'].to_s if options[:'-C']
-            cmd << '-n' if options[:'-n']
+        def matching_lines(file, regexp)
+          file.each_line.with_index(1).filter_map do |line, number|
+            "#{workspace.relative(file)}:#{number}:#{line.chomp}" if regexp.match?(line)
           end
-
-          # Add other flags
-          cmd << '-i' if options[:'-i']
-          cmd << '-U' << '--multiline-dotall' if options[:multiline]
-          cmd << '--glob' << options[:glob] if options[:glob]
-          cmd << '--type' << options[:type] if options[:type]
-
-          # Execute ripgrep
-          result = `#{cmd.join(' ')} 2>&1`
-          exit_code = $CHILD_STATUS.exitstatus
-
-          # Handle errors
-          if exit_code == 2
-            return "Error: #{result}"
-          elsif exit_code == 1
-            return 'No matches found'
-          end
-
-          # Apply head limit if specified
-          if options[:head_limit]
-            lines = result.lines
-            result = lines.take(options[:head_limit].to_i).join
-          end
-
-          result.strip
+        rescue ArgumentError, SystemCallError
+          [] # unreadable or not text
         end
       end
-      # rubocop:enable Style/Documentation
     end
   end
 end

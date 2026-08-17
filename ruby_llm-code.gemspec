@@ -8,8 +8,10 @@ Gem::Specification.new do |spec|
   spec.authors = ['Carmine Paolino']
   spec.email = ['carmine@paolino.me']
 
-  spec.summary = 'A powerful coding assistant powered by RubyLLM'
-  spec.description = 'RubyLLM Code provides an AI-powered coding assistant with file operations, shell execution, web search, and MCP support, optimized for software development workflows.' # rubocop:disable Layout/LineLength
+  spec.summary = 'A minimal coding agent for your terminal, built on RubyLLM'
+  spec.description = 'RubyLLM Code is a small coding agent for the terminal: read, write, and run code with any ' \
+                     'model RubyLLM supports, and put two models on the same task with /collab so they explore, ' \
+                     'argue, and agree before touching your files.'
   spec.homepage = 'https://github.com/crmne/ruby_llm-code'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.2.0'
@@ -22,18 +24,22 @@ Gem::Specification.new do |spec|
     'lib/**/*',
     'bin/*',
     'README.md',
-    'LICENSE',
-    'Gemfile'
+    'LICENSE'
   ]
 
   spec.bindir = 'bin'
   spec.executables = ['rubyllm']
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'ruby_llm', '~> 1.5.1'
-  spec.add_dependency 'ruby_llm-mcp', '~> 0.6.1'
+  # RubyLLM 2.0 for the agentic loop, tool approval, and the usage ledger. It is
+  # unreleased, so the Gemfile tracks trunk and this stays unpinned until 2.0 ships.
+  spec.add_dependency 'ruby_llm'
+  # Charm, ported to Ruby by Marco Roth: terminal styling and markdown.
+  spec.add_dependency 'glamour', '~> 0.2'
+  spec.add_dependency 'lipgloss', '~> 0.2'
+  # Fibers, so collaborating agents run their turns at the same time.
+  spec.add_dependency 'async', '~> 2.23'
+  # Line editing for the prompt.
+  spec.add_dependency 'reline', '>= 0.5'
   spec.add_dependency 'zeitwerk', '~> 2.6'
-
-  spec.add_development_dependency 'rspec', '~> 3.12' # rubocop:disable Gemspec/DevelopmentDependencies
-  spec.add_development_dependency 'standard', '~> 1.31' # rubocop:disable Gemspec/DevelopmentDependencies
 end

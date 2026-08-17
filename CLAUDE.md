@@ -1,68 +1,56 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for agents working in this repository.
 
-## Project Overview
+## What this is
 
-RubyLLM Code is a Ruby implementation of Claude Code - an AI-powered command-line interface for software development assistance. It emphasizes minimal dependencies, clean architecture, and excellent developer experience.
+RubyLLM Code is a small coding agent for the terminal, built on RubyLLM 2.0. Its
+one distinctive feature is `/collab <model>`: two models work the same task,
+explore the workspace in parallel, argue until they agree, and only then does the
+coder touch the files.
 
-## Essential Commands
+## Commands
 
-### Development Setup
 ```bash
-bundle install              # Install dependencies
-bundle check               # Verify dependencies are satisfied
+bundle install
+./bin/rubyllm                 # run it
+bundle exec rspec             # tests, no network needed
+bundle exec rubocop           # lint
+bundle exec rake              # both
 ```
 
-### Running the CLI
-```bash
-./bin/rubyllm              # Run locally during development
-bundle exec ruby bin/rubyllm   # Alternative local execution
-```
+RubyLLM 2.0 is unreleased, so the Gemfile tracks its trunk.
 
-### Testing
-```bash
-bundle exec rake spec      # Run full test suite
-bundle exec rake          # Default task - runs tests
-bundle exec rake coverage  # Run tests with coverage report
-```
+## Layout
 
-### Code Quality
-```bash
-bundle exec standardrb     # Run linting and formatting checks
-bundle exec standardrb --fix   # Auto-fix linting issues
-```
+- `lib/ruby_llm/code/cli.rb` — flags, then either one question or the REPL
+- `lib/ruby_llm/code/session.rb` — one sitting: turns, streaming, approvals
+- `lib/ruby_llm/code/collab.rb` — the two-model workflow
+- `lib/ruby_llm/code/coder.rb`, `peer.rb` — the two `RubyLLM::Agent` subclasses
+- `lib/ruby_llm/code/tools/` — `read list glob grep` and `write edit shell`
+- `lib/ruby_llm/code/prompts/` — every word the agents are told, as ERB
+- `lib/ruby_llm/code/ui.rb` — Lipgloss frames, Glamour markdown, one write mutex
 
-## Architecture Overview
+## Conventions
 
-The codebase follows a clean architecture pattern with single-responsibility classes:
+- **Lean on RubyLLM.** The agentic loop (`ask_later`, `complete`, `step`), tool
+  approval (`requires_approval`, `approve!`, `deny!`), the usage ledger
+  (`chat.tokens`, `chat.cost`), prompt templates, and `RubyLLM.workflow` are all
+  already there. Do not reimplement them here.
+- **Prompts are files.** Behaviour changes belong in `prompts/*.txt.erb`, not in
+  Ruby heredocs. A project's own `app/prompts` overrides them.
+- **Tools stay small.** One job each, `{ error: "..." }` for anything the model
+  should read and correct, `raise ToolError` for a refusal. Anything that changes
+  the workspace declares `requires_approval` and a `preview`.
+- **Every path goes through `Workspace#resolve`,** which refuses to leave the
+  workspace.
+- **All output goes through `UI`.** Nothing else prints; a spinner runs in its own
+  thread and the mutex in `UI#write` is what keeps lines intact.
+- Plain Ruby, small methods, no ceremony. Comments explain why, not what.
 
-- **CLI Entry Points**: `lib/rubyllm_cli/cli.rb` handles command-line parsing and mode selection (interactive vs non-interactive)
-- **Tool System**: All AI capabilities are implemented as tools extending `BaseTool` in `lib/rubyllm_cli/tools/`
-- **Workspace Management**: `Workspace` class enforces safe file system boundaries and respects gitignore
-- **Configuration**: Flexible configuration system supporting YAML files, environment variables, and CLI options
-- **Memory System**: Persistent conversation memory stored in `~/.rubyllm/memories/`
+## Testing
 
-## Key Development Patterns
-
-1. **Tool Development**: New tools should extend `BaseTool` and implement `name`, `description`, `parameters_schema`, and `execute` methods
-2. **Testing**: Use RSpec with temporary directories for file system operations. Mock RubyLLM responses using test helpers
-3. **Error Handling**: Tools should raise descriptive errors that get properly formatted for users
-4. **Streaming**: Support streaming responses by yielding chunks in tool implementations
-
-## Configuration
-
-Default configuration location: `~/.rubyllm/config.yml`
-
-Key environment variables:
-- `RUBYLLM_MODEL`: Override the AI model selection
-- `DEBUG`: Enable debug output when set to "1"
-
-## Dependencies
-
-Core runtime dependencies are minimal:
-- `ruby_llm` for LLM integration
-- `ruby_llm-mcp` for MCP server support
-- `zeitwerk` for code loading
-
-All other functionality uses Ruby's standard library.
+Specs never hit the network. Stub `RubyLLM::Code::Peer.new` to script a
+collaboration, and stub the coder's loop verbs to script a turn. `spec_helper.rb`
+gives every example a throwaway `sandbox` workspace and a `ui` writing to a
+`screen` you can read back.

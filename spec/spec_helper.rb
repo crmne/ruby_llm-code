@@ -1,67 +1,48 @@
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require 'ruby_llm-code'
-require 'tempfile'
+require 'ruby_llm/code'
+require 'tmpdir'
 require 'fileutils'
+require 'stringio'
+
+# A throwaway workspace, plus a UI that writes somewhere we can read back.
+module Sandbox
+  def sandbox
+    @sandbox ||= RubyLLM::Code::Workspace.new(Dir.mktmpdir('ruby_llm-code'))
+  end
+
+  def file(path, content = "puts 1\n")
+    full = sandbox.root.join(path)
+    FileUtils.mkdir_p(full.dirname)
+    full.write(content)
+    full
+  end
+
+  def tools
+    @tools ||= RubyLLM::Code::Tools.all(sandbox).to_h { |tool| [tool.name, tool] }
+  end
+
+  def screen
+    @screen ||= StringIO.new
+  end
+
+  def ui
+    @ui ||= RubyLLM::Code::UI.new(out: screen, input: StringIO.new, color: false)
+  end
+
+  def cleanup_sandbox
+    FileUtils.remove_entry(@sandbox.root) if @sandbox
+  end
+end
 
 RSpec.configure do |config|
-  config.expect_with :rspec do |expectations|
-    expectations.include_chain_clauses_in_custom_matcher_descriptions = true
-  end
-
-  config.mock_with :rspec do |mocks|
-    mocks.verify_partial_doubles = true
-  end
-
-  config.shared_context_metadata_behavior = :apply_to_host_groups
-  config.filter_run_when_matching :focus
-  config.example_status_persistence_file_path = 'spec/examples.txt'
+  config.expect_with(:rspec) { |expectations| expectations.syntax = :expect }
+  config.mock_with(:rspec) { |mocks| mocks.verify_partial_doubles = true }
   config.disable_monkey_patching!
-  config.warnings = true
-
-  config.default_formatter = 'doc' if config.files_to_run.one?
-
+  config.example_status_persistence_file_path = 'spec/examples.txt'
   config.order = :random
   Kernel.srand config.seed
 
-  # Helper to create temporary test directories
-  config.around do |example|
-    Dir.mktmpdir do |dir|
-      @temp_dir = File.expand_path(dir)
-      Dir.chdir(@temp_dir) do
-        example.run
-      end
-    end
-  end
-
-  # Stub RubyLLM for testing
-  config.before do
-    # rubocop:disable RSpec/VerifiedDoubles
-    allow(RubyLLM).to receive(:chat).and_return(double('chat',
-                                                       ask: double('response', content: 'Test response'),
-                                                       messages: [],
-                                                       model: double('model', id: 'test-model')))
-  end
-  # rubocop:enable RSpec/VerifiedDoubles
-end
-
-# Test helpers
-module TestHelpers
-  def create_test_file(path, content = 'test content')
-    full_path = File.join(@temp_dir, path)
-    FileUtils.mkdir_p(File.dirname(full_path))
-    File.write(full_path, content)
-    full_path
-  end
-
-  def test_config
-    config = RubyLLM::Code::Config.new
-    config.workspace_dir = File.expand_path(@temp_dir)
-    config
-  end
-end
-
-RSpec.configure do |config|
-  config.include TestHelpers
+  config.include Sandbox
+  config.after { cleanup_sandbox }
 end

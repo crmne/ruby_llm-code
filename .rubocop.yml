@@ -14,7 +14,13 @@ AllCops:
 Naming/FileName:
   Exclude:
     - lib/ruby_llm-code.rb
-    - lib/ruby_llm-code.minimal.rb
+
+Naming/MethodParameterName:
+  inherit_mode:
+    merge:
+      - AllowedNames
+  AllowedNames:
+    - ui
 
 Metrics/ClassLength:
   Enabled: false

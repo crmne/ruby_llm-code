@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'bundler/setup'
-require_relative '../lib/ruby_llm-code'
+require 'bundler/setup' if File.exist?(File.expand_path('../Gemfile', __dir__))
+require_relative '../lib/ruby_llm/code'
 
-RubyLLM::Code::CLI.run!
+RubyLLM::Code::CLI.start

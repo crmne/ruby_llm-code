@@ -2,10 +2,10 @@
 
 source 'https://rubygems.org'
 
-gem 'readline'
-gem 'ruby_llm', '~> 1.5.1'
-gem 'ruby_llm-mcp', '~> 0.6.1'
-gem 'zeitwerk'
+gemspec
+
+# RubyLLM 2.0 is still in development, so track trunk.
+gem 'ruby_llm', github: 'crmne/ruby_llm', branch: 'main'
 
 group :development, :test do
   gem 'overcommit'
