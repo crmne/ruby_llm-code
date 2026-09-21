@@ -9,7 +9,7 @@ module RubyLLM
       class Base < RubyLLM::Tool
         # Tools live under RubyLLM::Code::Tools, but the model should just see
         # +read+, not the whole namespace.
-        def self.tool_name = RubyLLM::Utils.underscore(name.split('::').last)
+        def self.tool_name = RubyLLM::Support::Utils.underscore(name.split('::').last)
 
         # What goes inside the parentheses when a call to this tool is shown.
         def self.label(_arguments) = nil
@@ -29,7 +29,7 @@ module RubyLLM
         end
 
         # Runs the tool body, turning a refusal into an error the model sees.
-        def call(...)
+        def call(tool_call: nil, **arguments)
           super
         rescue ToolError => e
           { error: e.message }

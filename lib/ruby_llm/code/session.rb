@@ -142,16 +142,16 @@ module RubyLLM
       end
 
       def decide(call)
-        return coder.approve!(call) if config.yolo
+        return coder.approve(call) if config.yolo
 
         case ui.approval(call)
         when :always
           config.yolo = true
-          coder.approve!(call)
-        when :yes then coder.approve!(call)
+          coder.approve(call)
+        when :yes then coder.approve(call)
         else
           ui.note('denied')
-          coder.deny!(call)
+          coder.deny(call)
         end
       end
 
@@ -160,7 +160,7 @@ module RubyLLM
       # close the round.
       def settle
         ui.note('interrupted')
-        coder.pending_approvals.each { |call| coder.deny!(call) }
+        coder.pending_approvals.each { |call| coder.deny(call) }
         coder.run_tools
       rescue StandardError
         nil

@@ -31,9 +31,8 @@ Gem::Specification.new do |spec|
   spec.executables = ['rubyllm']
   spec.require_paths = ['lib']
 
-  # RubyLLM 2.0 for the agentic loop, tool approval, and the usage ledger. It is
-  # unreleased, so the Gemfile tracks trunk and this stays unpinned until 2.0 ships.
-  spec.add_dependency 'ruby_llm'
+  # RubyLLM owns the agentic loop, tool approval, and usage ledger.
+  spec.add_dependency 'ruby_llm', '~> 2.0'
   # Charm, ported to Ruby by Marco Roth: terminal styling and markdown.
   spec.add_dependency 'glamour', '~> 0.2'
   spec.add_dependency 'lipgloss', '~> 0.2'

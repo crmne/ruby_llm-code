@@ -19,7 +19,7 @@ bundle exec rubocop           # lint
 bundle exec rake              # both
 ```
 
-RubyLLM 2.0 is unreleased, so the Gemfile tracks its trunk.
+RubyLLM 2.0 is installed from RubyGems.
 
 ## Layout
 

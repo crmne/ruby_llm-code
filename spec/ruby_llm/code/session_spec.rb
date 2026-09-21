@@ -125,8 +125,8 @@ RSpec.describe RubyLLM::Code::Session do
       allow(session.coder).to receive(:complete)
       allow(session.coder).to receive(:awaiting_approval?).and_return(true, false)
       allow(session.coder).to receive(:pending_approvals).and_return([call])
-      allow(session.coder).to receive(:approve!)
-      allow(session.coder).to receive(:deny!)
+      allow(session.coder).to receive(:approve)
+      allow(session.coder).to receive(:deny)
     end
 
     it 'runs the tool when the developer says yes' do
@@ -134,7 +134,7 @@ RSpec.describe RubyLLM::Code::Session do
 
       session.run('write it')
 
-      expect(session.coder).to have_received(:approve!).with(call)
+      expect(session.coder).to have_received(:approve).with(call)
     end
 
     it 'refuses the tool when the developer says no' do
@@ -142,7 +142,7 @@ RSpec.describe RubyLLM::Code::Session do
 
       session.run('write it')
 
-      expect(session.coder).to have_received(:deny!).with(call)
+      expect(session.coder).to have_received(:deny).with(call)
     end
 
     it 'stops asking after always' do
@@ -151,7 +151,7 @@ RSpec.describe RubyLLM::Code::Session do
       session.run('write it')
 
       expect(config.yolo).to be(true)
-      expect(session.coder).to have_received(:approve!).with(call)
+      expect(session.coder).to have_received(:approve).with(call)
     end
 
     it 'never asks in yolo mode' do
@@ -161,7 +161,7 @@ RSpec.describe RubyLLM::Code::Session do
       session.run('write it')
 
       expect(ui).not_to have_received(:approval)
-      expect(session.coder).to have_received(:approve!).with(call)
+      expect(session.coder).to have_received(:approve).with(call)
     end
   end
 

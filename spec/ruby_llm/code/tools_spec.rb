@@ -192,12 +192,12 @@ RSpec.describe RubyLLM::Code::Tools do
     end
 
     it 'gives up on a command that hangs' do
-      expect(tools['shell'].call({ command: 'sleep 5', timeout: 1 })).to eq(error: 'timed out after 1s: sleep 5')
+      expect(tools['shell'].call(command: 'sleep 5', timeout: 1)).to eq(error: 'timed out after 1s: sleep 5')
     end
   end
 
   it 'turns a refusal into something the model can read' do
-    expect(tools['read'].call({ path: '../outside.rb' })).to match(error: /outside the workspace/)
+    expect(tools['read'].call(path: '../outside.rb')).to match(error: /outside the workspace/)
   end
 
   private

@@ -6,7 +6,7 @@ Built on [RubyLLM](https://rubyllm.com) 2.0, which owns the hard parts: the agen
 
 ## Install
 
-RubyLLM 2.0 is still in development, so this tracks its trunk and is not on RubyGems yet. Clone it:
+RubyLLM 2.0 is available on RubyGems. Clone this project and install its dependencies:
 
 ```bash
 git clone https://github.com/crmne/ruby_llm-code
