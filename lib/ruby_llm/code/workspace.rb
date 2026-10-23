@@ -27,12 +27,13 @@ module RubyLLM
       end
 
       # Turns a model-supplied path into an absolute Pathname, refusing
-      # anything that would climb out of the workspace.
+      # anything that would climb out of the workspace. A path is judged by
+      # where it really leads, so a symlink inside cannot reach outside.
       def resolve(path)
         raise ToolError, 'path is required' if path.nil? || path.to_s.strip.empty?
 
         candidate = Pathname.new(File.expand_path(path.to_s, root.to_s))
-        return candidate if candidate == root || candidate.to_s.start_with?("#{root}#{File::SEPARATOR}")
+        return candidate if within?(candidate) && within?(real(candidate, path), real_root)
 
         raise ToolError, "#{path} is outside the workspace (#{root})"
       end
@@ -99,6 +100,27 @@ module RubyLLM
       end
 
       private
+
+      def within?(path, base = root) = path == base || path.to_s.start_with?("#{base}#{File::SEPARATOR}")
+
+      # The root as the file system knows it, since temporary folders and
+      # home directories are often reached through a link.
+      def real_root = @real_root ||= root.realpath
+
+      # Where +candidate+ really leads: the part that exists with its links
+      # resolved, then the rest, which a write would create. A broken link
+      # on the way would let a write follow it anywhere, so it is refused.
+      def real(candidate, path)
+        existing = candidate
+        rest = []
+        until existing.exist?
+          raise ToolError, "#{path} goes through a broken symlink" if existing.symlink?
+
+          rest.unshift(existing.basename)
+          existing = existing.dirname
+        end
+        existing.realpath.join(*rest)
+      end
 
       def capture(*command)
         stdout, = Open3.capture2e(*command, chdir: root.to_s)
